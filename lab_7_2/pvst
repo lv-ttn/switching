@@ -163,7 +163,8 @@ e) Настроим PVST, корневой vlan
    int gi0/0
    spanning-tree vlan 150 cost 2500
    no sh
-   ex
+   ex 
+
 4. Настроим роутер на палочке R1_10_fam
    Int fa 0/0
    No shutdown
@@ -182,14 +183,15 @@ e) Настроим PVST, корневой vlan
    Ip address 10.10.150.6 255.255.255.0
    End
    Wr mem
-5. Повторим для роутеров R8_11, R4_10
+
+5. Повторим пункт 4 для роутеров R8_11, R4_10
+
 6. Проверим настройки
    show vlan
    show interfaces trunk
    show etherch sum
    show spanning-tree
    show cdp
-
 
 Результаты:
 1) R1_9 ping 10.10.100.6, 10.10.150.6
