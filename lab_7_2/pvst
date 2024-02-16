@@ -1,0 +1,197 @@
+Цель: Настроить PVST на коммутаторах
+
+IP-план:
+R1_9 - fa0/0.50 - 10.10.50.6 - 255.255.255.0
+     - fa0/0.100 - 10.10.100.6 - 255.255.255.0
+     - fa0/0.150 - 10.10.150.6 - 255.255.255.0
+R4_10 - fa0/0.50 - 10.10.50.6 - 255.255.255.0
+      - fa0/0.100 - 10.10.100.6 - 255.255.255.0
+      - fa0/0.150 - 10.10.150.6 - 255.255.255.0
+R8_11 - fa0/0.50 - 10.10.50.6 - 255.255.255.0
+      - fa0/0.100 - 10.10.100.6 - 255.255.255.0
+      - fa0/0.150 - 10.10.150.6 - 255.255.255.0
+      
+1. Конфигурируем устройство SW1_9
+a) Настроим агрегацию каналов по протоколу lacp
+   int range gi0/1-2
+   channel-protocol lacp
+   channel-group 1 mode passive
+   no shutdown
+   ex
+b) В интерфейсах, которые мы агрегируем статически пропишем on режим
+   int range gi0/3,gi1/0
+   channel-group 2 mode on
+   no sh
+   ex
+с) Cоздадим vlan 50,100,150
+   vlan 50,100,150
+   no sh
+   ex
+d) Cделаем port-channel trunk и добавим в них vlan 50,100,150
+   interface port-channel 1
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+   interface port-channel 2
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+e) Пропишем trunk для соединения с маршрутизатором
+   interface gigabitethernet 0/0
+   switchport trunk encapsulation dot1q
+   switchport mode trunk
+   spanning-tree portfast trunk
+   ex
+f) Добавим все остальные порты во vlan 999 
+   vlan 999
+   name UNUSED
+   no sh
+   int range gi1/1-3
+   sw mo ac
+   sw ac vlan 999
+   ex
+e) Настроим PVST, корневой vlan
+   spanning-tree vlan 50 root primary
+   spanning-tree mode rapid-PVST 
+   int gi0/0
+   spanning-tree vlan 50 cost 500
+   no sh
+   ex
+
+2. Конфигурируем устройство SW4_10_fam 
+a) Настроим агрегацию каналов по протоколу lacp
+   int range gi0/1-2
+   channel-protocol lacp
+   channel-group 1 mode active
+   no shutdown
+   ex
+b) В интерфейсах, которые мы агрегируем по протоколу pagp, пропишем режим desirable  
+   int range gi1/1-2
+   channel-protocol pagp
+   channel-group 2 mode desirable
+   no sh
+   ex
+с) Создадим vlan 50,100,150
+   vlan 50,100,150
+   no sh
+   ex
+d) Сделаем port-channel trunk и добавим в них vlan 50,100,150
+   interface port-channel 1
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+   interface port-channel 2
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+e) Пропишем trunk для соединения с маршрутизатором
+   interface gigabitethernet 0/0
+   switchport trunk encapsulation dot1q
+   switchport mode trunk
+   spanning-tree portfast trunk
+   ex
+f) Добавим все остальные порты во vlan 999 
+   vlan 999
+   name UNUSED
+   no sh
+   int range gi1/0-2
+   sw mo ac
+   sw ac vlan 999
+   ex
+e) Настроим PVST, корневой vlan
+   spanning-tree vlan 100 root primary
+   spanning-tree mode rapid-PVST 
+   int gi0/0
+   spanning-tree vlan 100 cost 1500
+   no sh
+   ex
+   
+3. Конфигурируем устройство SW8_11_fam 
+a) Настроим агрегацию каналов по протоколу pagp
+	 int range gi0/3,gi1/0
+   channel-protocol pagp
+   channel-group 2 mode auto
+   no sh
+   ex
+b) В интерфейсах, которые мы агрегируем статически пропишем on режим
+   int range gi1/1-2
+   channel-group 1 mode on
+   no sh
+   ex
+с) Создаем vlan 50,100,150
+   vlan 50,100,150
+   no sh
+   ex
+d) Сделаем port-channel trunk и добавим в них vlan 50,100,150
+   interface port-channel 1
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+   interface port-channel 2
+   sw tr enc dot1q 
+   switchport mode trunk
+   sw tr all vl 50,100,150
+   no sh
+   ex
+e) Пропишем trunk для соединения с маршрутизатором
+   interface gigabitethernet 0/0
+   switchport trunk encapsulation dot1q
+   switchport mode trunk
+   spanning-tree portfast trunk
+   ex
+f) Добавим все остальные порты во vlan 999 
+   vlan 999
+   name UNUSED
+   no sh
+   int range gi0/1-2,gi1/3
+   sw mo ac
+   sw ac vlan 999
+   ex
+e) Настроим PVST, корневой vlan
+   spanning-tree vlan 150 root primary
+   spanning-tree mode rapid-PVST 
+   int gi0/0
+   spanning-tree vlan 150 cost 2500
+   no sh
+   ex
+4. Настроим роутер на палочке R1_10_fam
+   Int fa 0/0
+   No shutdown
+   Exit
+   Int fa0/0.50
+   Encapsulation dot1q 50
+   Ip address 10.10.50.6 255.255.255.0
+   No shutdown
+   Exit
+   Int fa0/0.100
+   Encapsulation dot1q 100
+   Ip address 10.10.100.6 255.255.255.0
+   No shutdown
+   Int fa0/0.150
+   Encapsulation dot1q 150
+   Ip address 10.10.150.6 255.255.255.0
+   End
+   Wr mem
+5. Повторим для роутеров R8_11, R4_10
+6. Проверим настройки
+   show vlan
+   show interfaces trunk
+   show etherch sum
+   show spanning-tree
+   show cdp
+
+
+Результаты:
+1) R1_9 ping 10.10.100.6, 10.10.150.6
+2) R4_10 ping 10.10.50.6, 10.10.150.6
+3) R8_11 ping 10.10.50.6, 10.10.100.6
